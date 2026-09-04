@@ -1,4 +1,4 @@
-# NAFNet - SISR
+# SRNAFNet
 
 An adaptation of NAFNet for Single-Image Super-Resolution
 
@@ -14,8 +14,8 @@ An adaptation of NAFNet for Single-Image Super-Resolution
 Clone the repository:
 
 ```bash
-git clone https://github.com/RyanVNgo/NAFNet-SISR.git
-cd NAFNet-SISR
+git clone https://github.com/RyanVNgo/SRNAFNet.git
+cd SRNAFNet
 ```
 
 Create a python virtual environment (recommended):
