@@ -1,3 +1,15 @@
+> [!NOTE]
+> **Archived — no longer maintained.**
+>
+> This project was developed as a semester long work for two separate classes
+> with a team of 5 people where I had the primary responsibility of model development.
+> Note that this respository is a copy of the [original](https://github.com/RyanVNgo/NAFNet-SISR),
+> made to be archived. I wanted to put the repository in an archival state but I didn't feel
+> like imposing modifications to the original should extension/change be desired (though I don't
+> foresee that happening).
+>
+> Ultimately, this project is preserved for the sake of provenance.
+
 # SRNAFNet
 
 An adaptation of NAFNet for Single-Image Super-Resolution
