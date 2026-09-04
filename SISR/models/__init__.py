@@ -7,6 +7,7 @@ from .archs.PlainNet import PlainNet
 from .archs.Baseline import Baseline
 from .archs.NAFNet import NAFNet
 from .archs.SRNAFNet import SRNAFNet, nafnet_weight_init
+from .archs.discriminator import Discriminator
 from .losses import losses
 
 import utils
@@ -25,6 +26,7 @@ __all__ = [
     'Baseline'
     'NAFNet'
     'SRNAFNet'
+    'Discriminator'
 ]
 
 
@@ -32,6 +34,8 @@ def create_sisr_model(options):
     network_options = options.get('network_arch', {})
     
     load_path = options.get('load_path', None)
+    ignore_yaml = options.get('ignore_yaml', False)
+
     yaml_path = None
     if load_path is not None:
         load_path = os.path.abspath(load_path)
@@ -41,7 +45,7 @@ def create_sisr_model(options):
             filename = os.path.splitext(filename)[0] + '.yaml'
             yaml_path = os.path.join(dir, filename)
 
-    if yaml_path is not None:
+    if yaml_path is not None and ignore_yaml == False:
         print('Network loaded')
         network_options = utils.parse_options(yaml_path).get('network_arch', {})
 
@@ -134,14 +138,14 @@ def create_sisr_model(options):
         )
     )
 
-    # net.apply(lambda m: nafnet_weight_init(m, scale=0.1))
+    net.apply(lambda m: nafnet_weight_init(m, scale=0.1))
     model = SISRModel(net, config, device)
     if load_path is not None:
         model.load_model(load_path)
     return model
 
 
-def create_loss(type, options):
+def create_loss(type, options, device):
     weight = options.get('weight', 1.0)
     match type:
         case 'psnrloss':
@@ -152,6 +156,8 @@ def create_loss(type, options):
             return losses.MSELoss(weight)
         case 'huberloss':
             return losses.HuberLoss(weight)
+        case 'vggloss':
+            return losses.VGGLoss(conv_index='22', weight=weight, device=device)
     return None
 
 

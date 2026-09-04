@@ -9,6 +9,8 @@ import yaml
 class SISRModel():
 
     def __init__(self, net, config, device='cpu'):
+        self.model_save_path = None
+        self.config_save_path = None
         self.config = config 
         self.net = net
         self.device = device
@@ -46,8 +48,11 @@ class SISRModel():
     def input_channel_depth(self):
         return self.net.c_in
 
-    def save_model(self, path):
-        torch.save(self.net.state_dict(), path)
+    def set_model_save_path(self, path):
+        self.model_save_path = path
+
+    def set_config_save_path(self, path):
+        self.config_save_path = path
 
     def load_model(self, path):
         self.net.load_state_dict(
@@ -55,13 +60,23 @@ class SISRModel():
                 path, 
                 weights_only=True, 
                 map_location=self.device
-            )
+            ),
+            strict=False
         )
 
-    def save_config(self, path):
-        with open(path, 'w') as net_config_file:
-            yaml.dump(self.config, net_config_file, default_flow_style=False)
+    def save_model(self, path=None):
+        if path is not None:
+            torch.save(self.net.state_dict(), path)
+        elif self.model_save_path is not None:
+            torch.save(self.net.state_dict(), self.model_save_path)
 
+    def save_config(self, path=None):
+        if path is not None:
+            with open(path, 'w') as net_config_file:
+                yaml.dump(self.config, net_config_file, default_flow_style=False)
+        elif self.config_save_path is not None:
+            with open(self.config_save_path, 'w') as net_config_file:
+                yaml.dump(self.config, net_config_file, default_flow_style=False)
 
 def sisr_network_types():
     network_dir = path.join(path.dirname(__file__), 'archs')

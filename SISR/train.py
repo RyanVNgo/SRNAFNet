@@ -43,7 +43,7 @@ def main():
     scheduler = setup_scheduler(optimizer, training_options.get('scheduler'))
     iterations = training_options.get('iterations', 1)
     print('Setting up criterions...')
-    criterions = setup_criterions(training_options.get('losses'))
+    criterions = setup_criterions(training_options.get('losses'), model.curr_device())
     batch_size = training_options.get('batch_size', 16)
     valid_interval = training_options.get('valid_interval', 32)
 
@@ -69,6 +69,9 @@ def main():
     print(f'    Iterations: {iterations}')
     print(f'    Validation Interval: {valid_interval}')
     print(f'    Model will be saved to:\n       {model_save_path}')
+
+    model.set_model_save_path(model_save_path)
+    model.set_config_save_path(config_save_path)
 
     model = train_for_iterations(
         model, 
@@ -97,6 +100,8 @@ def train_for_iterations(model, dataloaders, optimizer, scheduler, criterions, i
     train_iter = iter(train_loader)
     scaler = GradScaler()
 
+    # discrim = models.Discriminator(iterations, device)
+
     for i in range(iterations):
         iter_start_time = time.time()
         try:
@@ -114,6 +119,14 @@ def train_for_iterations(model, dataloaders, optimizer, scheduler, criterions, i
             loss = 0.0
             for loss_fn in criterions:
                 loss += loss_fn(pred, target)
+
+
+        # d_loss = discrim.update(pred, target)
+        # g_loss = discrim.adversarial_loss(pred, target)
+        # loss += g_loss * 1e-3
+
+        # log_writer.add_scalar('Discrim/D_Loss', d_loss.item(), i)
+        # log_writer.add_scalar('Discrim/Adv_Loss', g_loss.item(), i)
 
         optimizer.zero_grad()
         scaler.scale(loss).backward()
@@ -159,6 +172,10 @@ def train_for_iterations(model, dataloaders, optimizer, scheduler, criterions, i
             log_writer.add_scalar('Loss/Valid', valid_loss, i)
             log_writer.add_image('LR_SR_HR', img_ex_grid, i)
 
+        if i % 1000 == 999:
+            model.save_model()
+            model.save_config()
+
     elapsed_time = time.time() - start_time
     print(f'\nTraining Complete')
     print(f'    Total Training Time: {elapsed_time:.2f}s')
@@ -192,10 +209,10 @@ def prepare_image_preview(lr_img, sr_img, hr_img):
     return torch.cat((lr_img, sr_img, hr_img), dim=2)
 
 
-def setup_criterions(options):
+def setup_criterions(options, device):
     criterions = []
     for type in options.keys():
-        crit = models.create_loss(type, options.get(type))
+        crit = models.create_loss(type, options.get(type), device)
         if crit is not None:
             criterions.append(crit)
     return criterions

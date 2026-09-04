@@ -179,6 +179,141 @@ class NAFNetBlock(nn.Module):
         return y + x
 
 
+class BaselineBlock(nn.Module):
+    def __init__(self, c_in, dw_expand=1, ffn_expand=2, kernel_size=1, dropout=0.0):
+        super().__init__()
+
+        # First stage of block
+        self.norm_1 = LayerNorm2d(c_in)
+
+        dw_channels = c_in * dw_expand
+        self.conv_1 = nn.Conv2d(
+            in_channels = c_in, 
+            out_channels = dw_channels,
+            kernel_size = kernel_size,
+            padding = (kernel_size - 1) // 2
+        )
+        self.conv_2 = nn.Conv2d(
+            in_channels = dw_channels, 
+            out_channels = dw_channels,
+            kernel_size = (kernel_size * 2) + 1,
+            padding = kernel_size,
+            groups = dw_channels
+        )
+        self.conv_3 = nn.Conv2d(
+            in_channels = dw_channels, 
+            out_channels = c_in,
+            kernel_size = kernel_size,
+            padding = (kernel_size - 1) // 2
+        )
+
+        self.channel_attention = nn.Sequential(
+            nn.AdaptiveAvgPool2d(1),
+            nn.Conv2d(
+                in_channels = dw_channels, 
+                out_channels = dw_channels // 2, 
+                kernel_size=1, 
+            ),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(
+                in_channels = dw_channels // 2, 
+                out_channels = dw_channels,
+                kernel_size=1,
+            ),
+            nn.Sigmoid()
+        )
+
+        # Second stage of block
+        self.norm_2 = LayerNorm2d(c_in)
+
+        ffn_channels = c_in * ffn_expand 
+        self.conv_4 = nn.Conv2d(
+            in_channels = c_in, 
+            out_channels = ffn_channels,
+            kernel_size = kernel_size,
+            padding = (kernel_size - 1) // 2
+        )
+        self.conv_5 = nn.Conv2d(
+            in_channels = ffn_channels, 
+            out_channels = c_in,
+            kernel_size = kernel_size,
+            padding = (kernel_size - 1) // 2
+        )
+
+    def forward(self, input):
+        x = self.norm_1(input)
+        x = self.conv_1(x)
+        x = self.conv_2(x)
+        x = nn.GELU()(x)
+        x = x * self.channel_attention(x)
+        x = self.conv_3(x)
+
+        y = input + x
+
+        x = self.norm_2(y)
+        x = self.conv_4(x)
+        x = nn.GELU()(x)
+        x = self.conv_5(x)
+
+        return y + x
+
+
+class PlainNetBlock(nn.Module):
+    def __init__(self, c_in, dw_expand=1, ffn_expand=2, kernel_size=1, dropout=0.0):
+        super().__init__()
+
+        # First stage of block
+        dw_channels = c_in * dw_expand
+        self.conv_1 = nn.Conv2d(
+            in_channels = c_in, 
+            out_channels = dw_channels,
+            kernel_size = kernel_size,
+            padding = (kernel_size - 1) // 2
+        )
+        self.conv_2 = nn.Conv2d(
+            in_channels = dw_channels, 
+            out_channels = dw_channels,
+            kernel_size = (kernel_size * 2) + 1,
+            padding = kernel_size,
+            groups = dw_channels
+        )
+        self.conv_3 = nn.Conv2d(
+            in_channels = dw_channels, 
+            out_channels = c_in,
+            kernel_size = kernel_size,
+            padding = (kernel_size - 1) // 2
+        )
+
+        # Second stage of block
+        ffn_channels = c_in * ffn_expand 
+        self.conv_4 = nn.Conv2d(
+            in_channels = c_in, 
+            out_channels = ffn_channels,
+            kernel_size = kernel_size,
+            padding = (kernel_size - 1) // 2
+        )
+        self.conv_5 = nn.Conv2d(
+            in_channels = ffn_channels, 
+            out_channels = c_in,
+            kernel_size = kernel_size,
+            padding = (kernel_size - 1) // 2
+        )
+
+    def forward(self, input):
+        x = self.conv_1(input)
+        x = self.conv_2(x)
+        x = nn.ReLU()(x)
+        x = self.conv_3(x)
+
+        y = input + x
+
+        x = self.conv_4(y)
+        x = nn.ReLU()(x)
+        x = self.conv_5(x)
+
+        return y + x
+
+
 class LayerNormFunction(torch.autograd.Function):
     @staticmethod
     def forward(ctx, x, weight, bias, eps):

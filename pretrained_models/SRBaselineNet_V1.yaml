@@ -1,0 +1,41 @@
+network_arch:
+  block:
+    dw_expand: 2
+    ffn_expand: 2
+    kernel_size: 1
+  dec_blk_nums: []
+  dfe_count: 3
+  dfe_k: 3
+  enc_blk_nums: []
+  ending_k: 3
+  intro_k: 3
+  mid_blk_num: 1
+  sfe_k_nums:
+  - 3
+  - 5
+  - 7
+  type: SRNAFNet
+  ufe_count: 3
+  ufe_k: 3
+  width: 64
+
+# --- METRICS
+# Set5
+#   PSNR: 35.5897
+#   SSIM:  0.9452
+#
+# Set14
+#   PSNR: 31.0303
+#   SSIM:  0.8946
+#
+# BSD100
+#   PSNR: 30.1355
+#   SSIM:  0.8919
+#
+# Urban100
+#   PSNR: 27.9535
+#   SSIM:  0.9025
+#
+# Urban100 Time: 168.8175 ms
+#
+

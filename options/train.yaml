@@ -1,8 +1,9 @@
 
-name: SRNAFNet
+name: DSRNAFNet_V8
 
 model:
-  # load_path: ./pretrained_models/SRNAFNet_V5.pth
+  load_path: ./pretrained_models/DSRNAFNet_V4.pth
+  ignore_yaml: True
   save_path: ./pretrained_models/
   device: 'cuda'
 
@@ -17,9 +18,9 @@ model:
     ending_k: 3
 
     sfe_k_nums: [3, 5, 7]
-    dfe_count: 1
+    dfe_count: 3
     dfe_k: 3
-    ufe_count: 1
+    ufe_count: 3
     ufe_k: 3
 
     block:
@@ -28,24 +29,26 @@ model:
       kernel_size: 1
 
 training:
-  iterations: 20000
+  iterations: 10000
   valid_interval: 64
   batch_size: 16
 
   optimizer:
     type: AdamW
     weight_decay: 0.0
-    lr: !!float 1e-3
+    lr: !!float 1e-5
     betas: [0.9, 0.9]
 
   scheduler:
     type: CosineAnnealingLR
-    t_max: 20000 
+    t_max: 10000 
     eta_min: !!float 1e-7
 
   losses:
     l1loss:
       weight: 1.0
+    # vggloss:
+    #   weight: 0.01
 
 datasets:
   training:
